@@ -35,6 +35,11 @@ namespace Sharvis_01
         private NavigationHelper navigationHelper;
         private ObservableDictionary defaultViewModel = new ObservableDictionary();
         private string[] rooms;
+        private string[] n_room;
+        private string[] id_room;
+        private string[] type_room;
+        private string user;
+
 
         public Pieces()
         {
@@ -44,7 +49,7 @@ namespace Sharvis_01
             this.navigationHelper.LoadState += this.NavigationHelper_LoadState;
             this.navigationHelper.SaveState += this.NavigationHelper_SaveState;
 
-            CreatePiece();
+            // CreatePiece();
         }
 
         /// <summary>
@@ -91,6 +96,70 @@ namespace Sharvis_01
         {
         }
 
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            Button piece = (Button)e.Parameter;
+            Debug.WriteLine(piece.Name);
+            user = piece.Name;
+            CreatePiece();
+            this.navigationHelper.OnNavigatedTo(e);
+        }
+
+        private void check_room()
+        {
+            int x = 0, i = 0, j = 0;
+            int count = 1;
+            while (i < rooms.Length)
+            {
+                if (x == 1)
+                {
+                    if (count == 3)
+                    {
+                        j++;
+                        count = 0;
+                    }
+                    count++;
+                    x = 0;
+                }
+                else
+                    x++;
+                i++;
+            }
+            id_room = new String[j];
+            n_room = new String[j];
+            type_room = new String[j];
+            i = 0;
+            j = 0;
+            while (i < rooms.Length)
+            {
+                if (x == 1)
+                {
+                    if (count == 1)
+                    {
+                        id_room[j] = rooms[i];
+                        Debug.WriteLine(id_room[j]);
+                    }
+                    else if (count == 2)
+                    {
+                        n_room[j] = rooms[i];
+                        Debug.WriteLine(n_room[j]);
+                    }
+                    else if (count == 3)
+                    {
+                        type_room[j] = rooms[i];
+                        Debug.WriteLine(type_room[j]);
+                        count = 0;
+                        j++;
+                    }
+                    count++;
+                    x = 0;
+                }
+                else
+                    x++;
+                i++;
+            }
+        }
+
         private void path_rooms(string MyContent)
         {
             int x = 0, r = 0, count = 0;
@@ -118,6 +187,7 @@ namespace Sharvis_01
                 else
                     x++;
             }
+            check_room();
         }
 
         private async Task api_rooms()
@@ -135,33 +205,33 @@ namespace Sharvis_01
         {
             await api_rooms();
             // How many buttons do you want ?
-            for (int i = 0; i < rooms.Length; i++)
+            for (int i = 0; i < n_room.Length; i++)
             {
                 StackPanel stkpanel = new StackPanel();
                 stkpanel.Orientation = Orientation.Horizontal;
                 stkpanel.Height = 130;
                 Button btn = new Button();
                 {
-                    btn.Name = rooms[i];
+                    btn.Name = n_room[i];
                     btn.Height = 100;
                     btn.Width = 100;
                     btn.Foreground = new SolidColorBrush(Colors.White);
                     var ibrush = new ImageBrush();
-                    ibrush.ImageSource = new BitmapImage(new Uri(check_piece(rooms[i])));
+                    ibrush.ImageSource = new BitmapImage(new Uri(check_piece(type_room[i])));
                     btn.Background = ibrush;
-                    btn.Tag = i + 1;
+                    btn.Tag = id_room[i] + " " + user;
                     btn.Margin = new Thickness(5, 5, 5, 5);
                     btn.VerticalAlignment = Windows.UI.Xaml.VerticalAlignment.Top;
                 }
                 TextBlock pieces = new TextBlock();
                 {
-                    pieces.Name = rooms[i];
+                    pieces.Name = n_room[i];
                     pieces.Height = 100;
                     pieces.Width = 150;
                     pieces.Foreground = new SolidColorBrush(Colors.White);
                     pieces.FontSize = 20;
-                    pieces.Tag = i;
-                    pieces.Text = rooms[i];
+                    pieces.Tag = id_room[i];
+                    pieces.Text = n_room[i];
                     pieces.Margin = new Thickness(50, 45, 5, 5);
                     pieces.VerticalAlignment = Windows.UI.Xaml.VerticalAlignment.Top;
                 }
@@ -176,15 +246,15 @@ namespace Sharvis_01
        
         private string check_piece(string room)
         {
-            if (room == "Chambre")
+            if (room == "bedroom")
                 return ("ms-appx:/Assets/Chambre.jpg");
-            else if (room == "Salle de bain")
+            else if (room == "bathroom")
                 return ("ms-appx:/Assets/Salle de bain.jpg");
-            else if (room == "Cuisine")
+            else if (room == "kitchen")
                 return ("ms-appx:/Assets/Cuisine.jpg");
-            else if (room == "Salon")
+            else if (room == "living room")
                 return ("ms-appx:/Assets/Salon.jpg");
-            else if (room == "Toilettes")
+            else if (room == "restroom")
                 return ("ms-appx:/Assets/Toilettes.jpg");
             else
                 return ("ms-appx:/Assets/Chambre.jpg");
@@ -195,7 +265,6 @@ namespace Sharvis_01
             Debug.WriteLine(sender.ToString());
             Button toto = (Button)sender;
             Debug.WriteLine(toto.Name);
-
             this.Frame.Navigate(typeof(Actions), sender);
         }
         #region Inscription de NavigationHelper
@@ -213,10 +282,6 @@ namespace Sharvis_01
         /// </summary>
         /// <param name="e">Fournit des données pour les méthodes de navigation et
         /// les gestionnaires d'événements qui ne peuvent pas annuler la requête de navigation.</param>
-        protected override void OnNavigatedTo(NavigationEventArgs e)
-        {
-            this.navigationHelper.OnNavigatedTo(e);
-        }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {

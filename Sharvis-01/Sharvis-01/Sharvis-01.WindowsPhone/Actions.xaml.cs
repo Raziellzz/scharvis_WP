@@ -4,9 +4,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -32,10 +34,13 @@ namespace Sharvis_01
     {
         private NavigationHelper navigationHelper;
         private ObservableDictionary defaultViewModel = new ObservableDictionary();
-        private int ID = 0;
+        private string ID;
+        private string user;
+        private string[] action;
         private string[] NameAction;
         private string[] ID_Action;
-        private bool on_off = false;
+        private string[] status;
+        private string Json;
 
         public Actions()
         {
@@ -94,11 +99,15 @@ namespace Sharvis_01
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             Button piece = (Button)e.Parameter;
-            ID = (int)piece.Tag;
-            this.navigationHelper.OnNavigatedTo(e);
+            Debug.WriteLine(piece.Tag);
+            string test = (string)piece.Tag;
+            string[] tab = test.Split(' ');
+            ID = tab[0];
+            user = tab[1];
             Create_Actions();
+            this.navigationHelper.OnNavigatedTo(e);
         }
-
+        /*
         private void path_actions(string MyContent, char c)
         {
             int r = 0;
@@ -124,32 +133,117 @@ namespace Sharvis_01
                     }
                 }
             }
+        }*/
+
+        private void check_actions()
+        {
+            int x = 0, i = 0, j = 0;
+            int count = 1;
+            while (i < action.Length)
+            {
+                if (action[i] == "timeset")
+                    i = i + 2;
+                if (x == 1)
+                {
+                    if (count == 3)
+                    {
+                        j++;
+                        count = 0;
+                    }
+                    count++;
+                    x = 0;
+                }
+                else
+                    x++;
+                i++;
+            }
+            ID_Action = new String[j];
+            NameAction = new String[j];
+            status = new String[j];
+            i = 0;
+            j = 0;
+            while (i < action.Length)
+            {
+                if (action[i] == "timeset")
+                    i = i + 2;
+                if (x == 1)
+                {
+                    if (count == 1)
+                    {
+                        ID_Action[j] = action[i];
+                        Debug.WriteLine(ID_Action[j]);
+                    }
+                    else if (count == 2)
+                    {
+                        NameAction[j] = action[i];
+                        Debug.WriteLine(NameAction[j]);
+                    }
+                    else if (count == 3)
+                    {
+                        status[j] = action[i];
+                        Debug.WriteLine(status[j]);
+                        count = 0;
+                        j++;
+                    }
+                    count++;
+                    x = 0;
+                }
+                else
+                    x++;
+                i++;
+            }
         }
+
+        private void path_actions(string MyContent)
+        {
+            int x = 0, r = 0, count = 0;
+            string[] path = MyContent.Split('"');
+            for (int i = 0; i < path.Length; i++)
+            {
+                if (x == 1)
+                {
+                    x = 0;
+                    count++;
+                }
+                else
+                    x++;
+            }
+            action = new String[count];
+            x = 0;
+            for (int i = 0; i < path.Length; i++)
+            {
+                if (x == 1)
+                {
+                    action[r] = path[i];
+                    r++;
+                    x = 0;
+                }
+                else
+                    x++;
+            }
+            check_actions();
+        }
+
 
         private async Task api_Room_Id()
         {
             HttpClient client = new HttpClient();
             Debug.WriteLine(ID);
-            HttpResponseMessage answer = await client.GetAsync("http://163.5.84.234:4567/room?id=" + ID.ToString());
+            HttpResponseMessage answer = await client.GetAsync("http://163.5.84.234:4567/room?id=" + ID);
             HttpContent content = answer.Content;
             String MyContent = await content.ReadAsStringAsync();
             HttpContentHeaders header = content.Headers;
             Debug.WriteLine(MyContent);
-            path_actions(MyContent, ';');
+            path_actions(MyContent);
+            Debug.WriteLine(user);
         }
 
-        private async Task check_on_off(string id_action)
+        private bool check_on_off(string on_off)
         {
-            HttpClient client = new HttpClient();
-            Debug.WriteLine(ID);
-            HttpResponseMessage answer = await client.GetAsync("http://163.5.84.234:4567/status?id=" + id_action);
-            HttpContent content = answer.Content;
-            String MyContent = await content.ReadAsStringAsync();
-            HttpContentHeaders header = content.Headers;
-            if (MyContent == "0")
-                on_off = false;
+            if (on_off == "true")
+                return (true);
             else
-                on_off = true;
+                return (false);
         }
 
         private async void Create_Actions()
@@ -176,16 +270,81 @@ namespace Sharvis_01
                     action_b.Height = 100;
                     action_b.Width = 150;
                     action_b.OffContent = "Off";
-                    action_b.OnContent = "On"; 
-                    await check_on_off(ID_Action[i]);
-                    action_b.IsOn = on_off;
+                    action_b.OnContent = "On";
+                    action_b.IsOn = check_on_off(status[i]);
+                    action_b.Tag = ID_Action[i];
                     action_b.Margin = new Thickness(5, 5, 5, 5);
                     action_b.VerticalAlignment = Windows.UI.Xaml.VerticalAlignment.Top;
                 }
+                action_b.Toggled += ToggleSwitch_Toggled;
                 stkpanel.Children.Add(action_n);
                 stkpanel.Children.Add(action_b);
                 Content.Children.Add(stkpanel);
             }
+        }
+
+        private void ToggleSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            ToggleSwitch action_btn = (ToggleSwitch)sender;
+            Json = "{\"user\":\"" + user + "\",\"action\":\"" + action_btn.IsOn + "\",\"type\":\"" + action_btn.Name + "\",\"id\":\"" + action_btn.Tag + "\"}";
+            state_change();
+            //await api_Room_Id();
+        }
+
+        private void state_change()
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://163.5.84.234:4567/action");
+
+            request.ContentType = "application/json";
+            //request.UserAgent = "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; WOW64; Trident/6.0; Touch)";
+            // request.CookieContainer = cookie;
+
+            // Set the Method property to 'POST' to post data to the URI.
+            request.Method = "POST";
+
+            // start the asynchronous operation
+            request.BeginGetRequestStream(new AsyncCallback(GetRequestStreamCallback), request);
+            return;
+        }
+        private void GetRequestStreamCallback(IAsyncResult asynchronousResult)
+        {
+            HttpWebRequest request = (HttpWebRequest)asynchronousResult.AsyncState;
+
+            // End the operation
+            Stream postStream = request.EndGetRequestStream(asynchronousResult);
+
+            //postData value
+
+            string postData = Json;
+
+            // Convert the string into a byte array. 
+            byte[] byteArray = Encoding.UTF8.GetBytes(postData);
+
+            // Write to the request stream.
+            postStream.Write(byteArray, 0, postData.Length);
+            postStream.Dispose();
+
+            // Start the asynchronous operation to get the response
+            request.BeginGetResponse(new AsyncCallback(GetResponseCallback), request);
+
+        }
+        private void GetResponseCallback(IAsyncResult asynchronousResult)
+        {
+
+            HttpWebRequest request = (HttpWebRequest)asynchronousResult.AsyncState;
+            // End the operation
+            HttpWebResponse response = (HttpWebResponse)request.EndGetResponse(asynchronousResult);
+
+            Stream streamResponse = response.GetResponseStream();
+
+            StreamReader streamRead = new StreamReader(streamResponse);
+            string read = streamRead.ReadToEnd();
+            Debug.WriteLine(read);
+            //respond from httpRequest
+            // Close the stream object
+            streamResponse.Dispose();
+            streamRead.Dispose();
+            response.Dispose();
         }
     }
 }
