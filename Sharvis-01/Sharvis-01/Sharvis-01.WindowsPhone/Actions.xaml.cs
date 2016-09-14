@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Net.Http.Headers;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
@@ -240,10 +241,9 @@ namespace Sharvis_01
 
         private bool check_on_off(string on_off)
         {
-            if (on_off == "true")
-                return (true);
-            else
-                return (false);
+            if (on_off == "True" || on_off == "on")
+                return (true);  
+            return (false);
         }
 
         private async void Create_Actions()
@@ -285,10 +285,16 @@ namespace Sharvis_01
 
         private void ToggleSwitch_Toggled(object sender, RoutedEventArgs e)
         {
+            string O_I;
             ToggleSwitch action_btn = (ToggleSwitch)sender;
-            Json = "{\"user\":\"" + user + "\",\"action\":\"" + action_btn.IsOn + "\",\"type\":\"" + action_btn.Name + "\",\"id\":\"" + action_btn.Tag + "\"}";
+            if (action_btn.IsOn.ToString() == "True")
+                O_I = "on";
+            else
+                O_I = "off";
+            Json = "{\"user\":\"" + user + "\",\"action\":\"" + O_I + "\",\"type\":\"" + action_btn.Name + "\",\"id\":\"" + action_btn.Tag + "\"}";
             state_change();
-            //await api_Room_Id();
+            //Content.Children.Clear();
+            //Create_Actions();
         }
 
         private void state_change()
