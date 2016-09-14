@@ -193,7 +193,7 @@ namespace Sharvis_01
         private async Task api_rooms()
         {
             HttpClient client = new HttpClient();
-            HttpResponseMessage answer = await client.GetAsync("http://163.5.84.234:4567/rooms");
+            HttpResponseMessage answer = await client.GetAsync("adresse_serveur");
             HttpContent content = answer.Content;
             String MyContent = await content.ReadAsStringAsync();
             HttpContentHeaders header = content.Headers;

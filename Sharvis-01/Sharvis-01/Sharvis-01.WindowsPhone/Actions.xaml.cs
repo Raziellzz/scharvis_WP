@@ -230,7 +230,7 @@ namespace Sharvis_01
         {
             HttpClient client = new HttpClient();
             Debug.WriteLine(ID);
-            HttpResponseMessage answer = await client.GetAsync("http://163.5.84.234:4567/room?id=" + ID);
+            HttpResponseMessage answer = await client.GetAsync("adresse_serveur" + ID);
             HttpContent content = answer.Content;
             String MyContent = await content.ReadAsStringAsync();
             HttpContentHeaders header = content.Headers;
@@ -299,7 +299,7 @@ namespace Sharvis_01
 
         private void state_change()
         {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://163.5.84.234:4567/action");
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("adresse_serveur");
 
             request.ContentType = "application/json";
             //request.UserAgent = "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; WOW64; Trident/6.0; Touch)";

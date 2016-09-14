@@ -68,7 +68,7 @@ namespace Sharvis_01
               };
               HttpContent q = new FormUrlEncodedContent(data);
               HttpClient client = new HttpClient();
-              HttpResponseMessage answer = await client.PostAsync("http://163.5.84.234:4567/login", q);
+              HttpResponseMessage answer = await client.PostAsync("adresse_serveur", q);
               HttpContent content = answer.Content;
               String MyContent = await content.ReadAsStringAsync();
               HttpContentHeaders header = content.Headers;
@@ -81,7 +81,7 @@ namespace Sharvis_01
                       await Dialog.ShowAsync();
                       return;
                   }*/
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://163.5.84.234:4567/login");
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("adresse_serveur");
 
             request.ContentType = "application/json";
             //request.UserAgent = "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; WOW64; Trident/6.0; Touch)";
